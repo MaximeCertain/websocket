@@ -1,46 +1,81 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <link href="./style.css" type="text/css" rel="stylesheet"/>
-        <title>websocket chat</title>
-    </head>
-    <body>
-        <h1>websocket chat</h1>
-        <div class="chat">
-            <div class="chat-header">
-                Votre nom : <input type="text" name="chat-name" />
-                <button class="chat-login" onclick="connectUser()">Valider</button>
-            </div>
-            <div class="chat-content"></div>
-            <div class="chat-form">
-                <textarea value="" rows="5" cols="45" name="chat-message" disabled="disabled"></textarea>
-                <button class="chat-send" disabled="disabled" onclick="sendMessage()">ok</button>
-            </div>
-        </div>
-        <script>
-            let user;
-            let mySocket
-            function connect() {
-                // TO IMPLEMENT
-            }
+<head>
+    <meta charset="utf-8"/>
+    <link href="./style.css" type="text/css" rel="stylesheet"/>
+    <title>websocket chat</title>
+</head>
+<body>
+<h1>websocket chat</h1>
+<div class="chat">
+    <div class="chat-header">
+        Votre nom : <input type="text" name="chat-name"/>
+        <button class="chat-login" onclick="connectUser()">Valider</button>
+    </div>
+    <div class="chat-content"></div>
+    <div class="chat-form">
+        <textarea value="" rows="5" cols="45" name="chat-message" disabled="disabled"></textarea>
+        <button class="chat-send" disabled="disabled" onclick="sendMessage()">ok</button>
+    </div>
+</div>
+<script>
+    let user;
+    let mySocket;
+    let isConnected = false;
 
-            function connectUser() {
-                user = document.getElementsByName('chat-name')[0].value;
-                if (user) {
-                    connect();
-                    document.getElementsByName('chat-message')[0].disabled = false;
-                    document.getElementsByClassName('chat-send')[0].disabled = false;
-                }
-            }
+    function connect() {
+        if(isConnected) return;
+        mySocket = new WebSocket('ws://localhost:3001');
+        mySocket.onopen = (event) => {
+            console.info('WebSocket connection opened ', event);
+            console.log("hééhhéhéhé");
+        };
 
-            function sendMessage() {
-                const message = document.getElementsByName('chat-message')[0].value;
-                // TO IMPLEMENT
-                document.getElementsByName('chat-message')[0].value = '';
+        mySocket.onclose = () => { isConnected =false;
+            console.info("WebSocket closed event");
+        };
+
+        mySocket.onerror = (event) => {isConnected =false;
+            console.error("WebSocket error observed:", event);
+        };
+
+        mySocket.onmessage = (message) => {
+            let t = (JSON.parse(message.data));
+            let newDiv = document.createElement("div");
+            console.log(t.text);
+            newDiv.innerText = (t.user + " : " + t.text);
+            let bloc = document.getElementsByClassName('chat-content');
+            bloc[0].appendChild(newDiv);
+        }
+    }
+
+
+    function connectUser() {
+        if (user == null) {
+            user = document.getElementsByName('chat-name')[0].value;
+            if (user) {
+                connect();
+                document.getElementsByName('chat-message')[0].disabled = false;
+                document.getElementsByClassName('chat-send')[0].disabled = false;
             }
-        </script>
-    </body>
+        }
+    }
+
+    function sendMessage() {
+        const message = document.getElementsByName('chat-message')[0].value;
+        var msg = {
+            type: "message",
+            text: message,
+            date: Date.now(),
+            user: user
+        };
+        console.log(message);
+        mySocket.send(JSON.stringify(msg));
+        // TO IMPLEMENT
+        document.getElementsByName('chat-message')[0].value = '';
+        }
+
+
+</script>
+</body>
 </html>
-
-;
